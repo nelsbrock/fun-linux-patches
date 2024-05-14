@@ -1,0 +1,35 @@
+diff --git a/fs/exec.c b/fs/exec.c
+index 5ee2545c3e18..39739119d148 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1939,6 +1939,8 @@ static int do_execveat_common(int fd, struct filename *filename,
+ 		goto out_ret;
+ 	}
+ 
++	pr_info("Task (pid: %d, comm: '%s') executed '%s'\n", current->pid, current->comm, bprm->filename);
++
+ 	retval = count(argv, MAX_ARG_STRINGS);
+ 	if (retval == 0)
+ 		pr_warn_once("process '%s' launched '%s' with NULL argv: empty string added\n",
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 3b9cdb42e757..11c52d81e0c3 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -2867,6 +2867,7 @@ pid_t kernel_clone(struct kernel_clone_args *args)
+ 	struct task_struct *p;
+ 	int trace = 0;
+ 	pid_t nr;
++	char comm[TASK_COMM_LEN];
+ 
+ 	/*
+ 	 * For legacy clone() calls, CLONE_PIDFD uses the parent_tid argument
+@@ -2915,6 +2916,9 @@ pid_t kernel_clone(struct kernel_clone_args *args)
+ 	pid = get_task_pid(p, PIDTYPE_PID);
+ 	nr = pid_vnr(pid);
+ 
++	get_task_comm(comm, p);
++	pr_info("Task (pid: %d, comm: '%s') cloned to new task (pid: %d, comm: '%.*s')\n", current->pid, current->comm, nr, TASK_COMM_LEN, comm);
++
+ 	if (clone_flags & CLONE_PARENT_SETTID)
+ 		put_user(nr, args->parent_tid);
+ 
